@@ -1,0 +1,180 @@
+Friday, 7 Jul, 2017
+
+AJAX
+
+Video
+With jQuery, we can make AJAX calls to web servers to
+
+GET data and display it on our web pages
+POST data and display the result on our web pages
+The GET method should be used for non-destructive operations - operations where we are only getting data from the server, not changing it. For example, a search.
+
+The POST method is used for destructive operations - operations where we are changing data on the server. For example, posting a comment.
+
+This can be done without the web page having to reload. AJAX stands for Asynchronous JavaScript And XML, and we will commonly pass data using JSON, JavaScript Object Notation. Generally speaking, Ajax does not work across domains. A webpage loaded from www.yoursite.com is normally unable to make a request to www.mysite.com as it would violate the same origin policy. CORS (Cross-Origin Resource Sharing) allows Ajax requests across domains.
+
+For a simple test, let's practice retrieving some JSON data. Let's create an ajax.html file
+
+<head>
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+  <script src="application.js"></script>
+</head>
+<body>
+  <div id="response-data"></div>
+</body>
+Let's create it's corresponding application.js file:
+
+$(function () {
+  $.getJSON("https://jsonip.com/",
+    function(response) {
+      $('#response-data').html(JSON.stringify(response));
+    });
+});
+In the above exercise, we use $.getJSON to retrieve JSON data from the jsonip server, which returns our IP address, along with some other stuff. This data is first made into a string using stringify and then rendered on our webpage. There are lots of APIs out there to use, and you will build many in your web development careers.
+
+The next step will be to parse the JSON data and insert it into our HTML. To do that, let's add an unordered list to our HTML with an id we can use in our JS. We'll then append list items to it with each piece of data.
+
+<body>
+  <ul id="response-data">
+  </ul>
+</body>
+Add the changes in the JS file below to your JS file:
+
+$(function () {
+  $.getJSON("https://jsonip.com/",
+    function(response) {
+      $.each(response, function(i, item) {
+        $('#response-data').append("<li>" + item + "</li>");
+      });
+    });
+});
+Practice
+
+Try adjusting the code above to display different pieces of the returned object.
+Add a console log to see what the object looks like before it is rendered.
+getJSON is just a simpler version of the full $.ajax jQuery call. Let's rewrite our method using the $.ajax method.
+Your code should look something like this:
+
+$(function() {
+  $.ajax("https://jsonip.com/", {
+    success: function(response) {
+      $.each(response, function(i, item) {
+        $('#address').append("<li>" + item + "</li>");
+      });
+    }
+  });
+});
+The success function above is code that is executed ONLY IF the AJAX call is successful.
+
+Dealing with errors
+
+If something blows up in the AJAX request, we want to have something to handle errors so that something occurs and the user is notified when something goes wrong.
+
+With our full function, error handling is fairly simple. We add the error callback, and add what we want to do when there is an error.
+
+$(function() {
+  $.ajax("https://jsonip.com/", {
+    success: function(response) {
+      $.each(response, function(i, item) {
+        $('#address').append("<li>" + item + "</li>");
+      });
+    },
+    error: function(request, errorType, errorMessage) {
+      alert('Error: ' + errorType + ' with message: ' + errorMessage);
+    }
+  });
+});
+The above code won't trigger an error. An easy way to do so is to modify the URL to something that doesn't exist or doesn't return JSON. Go ahead and do that now.
+
+Doing stuff before and after the request
+
+Oftentimes, we want to show that our data is loading so that the user knows that something is going on while our Ajax function sends and or receieves data. This can be done with the beforeSend and complete callbacks (find it here). Let's add those to our function, along with a timeout to indicate how long to wait for the data to load.
+
+$(function() {
+  $.ajax("https://jsonip.com/", {
+    success: function(response) {
+      $.each(response, function(i, item) {
+        $('#address').append("<li>" + item + "</li>");
+      });
+    },
+    error: function(request, errorType, errorMessage) {
+      alert('Error: ' + errorType + ' with message: ' + errorMessage);
+    },
+    timeout: 2000,
+    beforeSend: function() {
+      $('#loading').append('<h4 class="loading-text">Loading...</h4>');
+    },
+    complete: function() {
+      $("h4").remove();
+    }
+  });
+});
+You may not see anything there because the successful call happens so fast. Maybe a debugger statement is good here?
+
+Forms
+
+So far, we've learned how to GET data. Now, we will practice POST requests. We will submit this data online. First, go to PutsReq and click 'Create a PutsReq.' This will create a little bucket for us to send data to. Next, we need to alter the response from the server so our success callback will fire (this is in the PutsReq you just made)
+
+Response code:
+
+response.status = 200;
+response.headers['Content-Type'] = 'application/json';
+response.body = { 'msg': 'ok' };
+Great. now we can build a simple form in HTML. Don't forget to add jQuery and your relevant JS file:
+
+<form id="commentForm">
+  <input type="text" id="comment" name="comment">
+  <button type="submit" id="submitComment">Submit Comment</button>
+</form>
+<div id="commentStatus">
+</div>
+Read the following JavaScript code carefully.
+
+$(function() {
+  $("#submitComment").submit(function(e) {
+    e.preventDefault();
+    $(this).attr('disabled','disabled'); // Switch to default grey
+    $(this).html("Sending"); // Change text of button
+    $.ajax({
+      async: true,
+      type: 'POST',
+      url: "<YOUR PUTSREQ URL>",
+      data: $('#commentForm #comment').serialize(),
+      dataType: 'text',
+      crossDomain: true,
+      complete: function() {
+        $("#submitComment").removeAttr('disabled'); // Change back text of button
+      },
+      error: function(request, errorType, errorMessage) {
+        $("#commentStatus").text("Comment failed. Error: " + errorType + " " + errorMessage);
+      },
+      success: function(response) {
+        $("#commentStatus").text("Comment sent successfully.");
+        $('#submitComment').html("Submit Comment");
+      }
+    });
+  });
+});
+We use preventDefault to stop the browser from loading a new page.
+We add type to the ajax call and set it to POST indicating that this is a POST request.
+We serialize the data from the form and send it as text indicated by dataType
+Like before, we use the complete, error, and success callbacks to do different things.
+Add your PutsReq URL to make this work.
+AJAX Final Project
+
+It's time to bring everything together. Forms are serious business, and can often be a pain.
+
+Build a form that meets the following requirements:
+
+Use Bootstrap. The form should be two columns on desktop, and one column on Mobile.
+The following pieces of data are collected:
+First Name
+Last Name
+Date of Birth (use a datepicker for bonus points)
+email Address
+Street Address
+Phone Number
+username
+password (should be input type password)
+confirm password (use JavaScript to make sure they match)
+Send your form data using AJAX to a new PutsReq. Did your data come through correctly?
